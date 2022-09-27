@@ -40,16 +40,16 @@ type alias Url =
 -}
 slide : Url -> Size -> Html msg
 slide url size =
-    div
-        [ style "background-image" ("url(" ++ url ++ ")")
-        , style "background-size" (toBackgroundSize size)
+    img
+        [ src ("url(" ++ url ++ ")")
+        , style "object-fit" (toObjectFit size)
         , class "elm-gallery-image"
         ]
         []
 
 
-toBackgroundSize : Size -> String
-toBackgroundSize size =
+toObjectFit : Size -> String
+toObjectFit size =
     case size of
         Cover ->
             "cover"

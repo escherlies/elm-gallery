@@ -692,8 +692,6 @@ styleSheet (Config config_) drag =
                 ++ config_.id
                 ++ """ .elm-gallery-image {
                 position: absolute;
-                background-position: center center;
-                background-repeat: no-repeat;
                 width: 100%;
                 height: 100%;
             }
