@@ -38,13 +38,15 @@ type alias Url =
 
 {-| Create an image slide that either fits or covers the gallery container
 -}
-slide : Url -> Size -> Html msg
-slide url size =
+slide : List (Html.Attribute msg) -> Url -> Size -> Html msg
+slide attrs url size =
     img
-        [ src ("url(" ++ url ++ ")")
-        , style "object-fit" (toObjectFit size)
-        , class "elm-gallery-image"
-        ]
+        ([ src ("url(" ++ url ++ ")")
+         , style "object-fit" (toObjectFit size)
+         , class "elm-gallery-image"
+         ]
+            ++ attrs
+        )
         []
 
 

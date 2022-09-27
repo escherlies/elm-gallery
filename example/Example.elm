@@ -73,7 +73,7 @@ textSlides =
 
 imageSlides : List ( String, Html msg )
 imageSlides =
-    List.map (\x -> ( x, Image.slide x Image.Cover )) images
+    List.map (\x -> ( x, Image.slide [] x Image.Cover )) images
 
 
 textSlide : String -> Html msg
