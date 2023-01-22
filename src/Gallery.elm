@@ -19,6 +19,7 @@ module Gallery exposing
     , next
     , previous
     , current
+    , unset, viewEl
     )
 
 {-|
@@ -73,6 +74,9 @@ module Gallery exposing
 
 -}
 
+import Element exposing (Element, column, el, fill, html, htmlAttribute)
+import Element.Keyed
+import Element.Lazy
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -226,6 +230,42 @@ update msg ((State index_ drag slideCount) as state) =
 -- CONTROL
 
 
+type Dir
+    = PrevIdx
+    | NextIdx
+
+
+{-| Get the next index for a givent direction. Wraps around if out of bound
+-}
+getIndex : Dir -> number -> number -> number
+getIndex dir slideCount index_ =
+    let
+        maxIndex =
+            slideCount - 1
+
+        nextIndex =
+            getIndexOfDir dir index_
+    in
+    if nextIndex > maxIndex then
+        clamp 0 (slideCount - 1) 0
+
+    else if nextIndex < 0 then
+        clamp 0 (slideCount - 1) maxIndex
+
+    else
+        clamp 0 (slideCount - 1) nextIndex
+
+
+getIndexOfDir : Dir -> number -> number
+getIndexOfDir dir index_ =
+    case dir of
+        PrevIdx ->
+            index_ - 1
+
+        NextIdx ->
+            index_ + 1
+
+
 {-| Go to next slide
 
     { model | gallery = Gallery.next model.gallery }
@@ -233,7 +273,10 @@ update msg ((State index_ drag slideCount) as state) =
 -}
 next : State -> State
 next (State index_ _ slideCount) =
-    State (clamp 0 (slideCount - 1) (index_ + 1)) Nothing slideCount
+    State
+        (getIndex NextIdx slideCount index_)
+        Nothing
+        slideCount
 
 
 {-| Go to previous slide
@@ -243,7 +286,10 @@ next (State index_ _ slideCount) =
 -}
 previous : State -> State
 previous (State index_ _ slideCount) =
-    State (clamp 0 (slideCount - 1) (index_ - 1)) Nothing slideCount
+    State
+        (getIndex PrevIdx slideCount index_)
+        Nothing
+        slideCount
 
 
 {-| Go to slide at index
@@ -281,6 +327,26 @@ view ((Config configR) as config_) ((State _ drag _) as state) navigation slides
             ++ List.map (viewControls state) navigation
 
 
+{-|
+
+    Gallery.view config model.gallery [] slides
+
+-}
+viewEl : Config -> State -> List Controls -> List ( String, Element Msg ) -> Element Msg
+viewEl ((Config configR) as config_) ((State _ drag _) as state) navigation slides =
+    column
+        [ htmlAttribute (id configR.id)
+        , Element.width fill
+        , Element.height fill
+        , Element.scrollbars
+        ]
+    <|
+        [ Element.Lazy.lazy2 viewSlidesEl state slides
+        , Element.Lazy.lazy2 (\c d -> html (styleSheet c d)) config_ drag
+        ]
+            ++ List.map (html << viewControls state) navigation
+
+
 
 -- SLIDES
 
@@ -289,6 +355,18 @@ viewSlides : State -> List ( String, Html Msg ) -> Html Msg
 viewSlides ((State index_ _ _) as state) slides =
     Keyed.ul (viewSlidesAttributes state) <|
         List.indexedMap (viewSlide index_) slides
+
+
+viewSlidesEl : State -> List ( String, Element Msg ) -> Element Msg
+viewSlidesEl ((State index_ _ _) as state) slides =
+    Element.Keyed.row
+        ((List.map htmlAttribute <| viewSlidesAttributes state)
+            ++ [ Element.width Element.fill
+               , Element.height Element.fill
+               ]
+        )
+    <|
+        List.indexedMap (viewSlideEl index_) slides
 
 
 viewSlidesAttributes : State -> List (Attribute Msg)
@@ -330,6 +408,22 @@ viewSlide currentIndex slideIndex ( id, html ) =
     )
 
 
+viewSlideEl : Index -> Index -> ( String, Element Msg ) -> ( String, Element Msg )
+viewSlideEl currentIndex slideIndex ( id, content ) =
+    ( id
+    , el
+        [ htmlAttribute <|
+            classList
+                [ ( "elm-gallery-itemcontainer", True )
+                , ( "elm-gallery-current", currentIndex == slideIndex )
+                ]
+        , Element.width fill
+        , Element.height fill
+        ]
+        content
+    )
+
+
 
 -- NAVIGATION
 
@@ -337,31 +431,36 @@ viewSlide currentIndex slideIndex ( id, html ) =
 {-| -}
 type Controls
     = Arrows
+      --| Allow to cycle through the gallery
+    | ArrowsInfinite
 
 
 viewControls : State -> Controls -> Html Msg
 viewControls state navigation =
     case navigation of
         Arrows ->
-            viewControlsArrows state
+            viewControlsArrows False state
+
+        ArrowsInfinite ->
+            viewControlsArrows True state
 
 
-viewControlsArrows : State -> Html Msg
-viewControlsArrows (State index_ _ slideCount) =
+viewControlsArrows : Bool -> State -> Html Msg
+viewControlsArrows infinite (State index_ _ slideCount) =
     div
         []
         [ button
             [ onClick Next
             , class "elm-gallery-next"
             , title "next"
-            , disabled (index_ == slideCount - 1)
+            , disabled (not infinite && index_ == slideCount - 1)
             ]
             []
         , button
             [ onClick Previous
             , class "elm-gallery-previous"
             , title "previous"
-            , disabled (index_ == 0)
+            , disabled (not infinite && index_ == 0)
             ]
             []
         ]
@@ -522,7 +621,7 @@ toCssTranslate slideCount index_ x y =
 
 
 styleSheet : Config -> Maybe Drag -> Html msg
-styleSheet (Config config_) drag =
+styleSheet (Config config_) _ =
     node "style"
         []
         [ text <|

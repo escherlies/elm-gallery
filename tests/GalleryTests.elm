@@ -1,7 +1,7 @@
 module GalleryTests exposing (..)
 
-import Expect exposing (Expectation)
-import Fuzz exposing (Fuzzer, int)
+import Expect
+import Fuzz exposing (int)
 import Gallery
 import Test exposing (..)
 

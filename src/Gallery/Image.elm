@@ -1,7 +1,7 @@
 module Gallery.Image exposing
     ( slide
-    , Size(..)
     , Url
+    , ObjectFit(..)
     )
 
 {-|
@@ -25,7 +25,7 @@ import Html.Attributes exposing (..)
 
 {-| How the image is displayed within it's container, same as CSS background-size
 -}
-type Size
+type ObjectFit
     = Cover
     | Contain
 
@@ -38,10 +38,10 @@ type alias Url =
 
 {-| Create an image slide that either fits or covers the gallery container
 -}
-slide : List (Html.Attribute msg) -> Url -> Size -> Html msg
+slide : List (Html.Attribute msg) -> Url -> ObjectFit -> Html msg
 slide attrs url size =
     img
-        ([ src ("url(" ++ url ++ ")")
+        ([ src url
          , style "object-fit" (toObjectFit size)
          , class "elm-gallery-image"
          ]
@@ -50,7 +50,7 @@ slide attrs url size =
         []
 
 
-toObjectFit : Size -> String
+toObjectFit : ObjectFit -> String
 toObjectFit size =
     case size of
         Cover ->
