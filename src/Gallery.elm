@@ -747,6 +747,29 @@ styleSheet (Config config_) _ =
                 background-color: white;
             }
 
+            @media (prefers-color-scheme: light) {
+                #"""
+                ++ config_.id
+                ++ """ .elm-gallery-close:after,
+                #"""
+                ++ config_.id
+                ++ """ .elm-gallery-close:before,
+                #"""
+                ++ config_.id
+                ++ """ .elm-gallery-previous:after,
+                #"""
+                ++ config_.id
+                ++ """ .elm-gallery-previous:before,
+                #"""
+                ++ config_.id
+                ++ """ .elm-gallery-next:after,
+                #"""
+                ++ config_.id
+                ++ """ .elm-gallery-next:before {
+                    background-color: black;
+                }
+            }
+
             #"""
                 ++ config_.id
                 ++ """ .elm-gallery-next:before {
